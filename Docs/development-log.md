@@ -53,6 +53,16 @@
 ### Full Test Results — 15/15 Passed
 All tools tested via CodeBuddy MCP integration against live Aura project (UE 5.7.1).
 
+### Editor Crash Fix — TypedElement Assert
+- **Symptom**: `delete_actor` on a selected actor triggers assert: `Element type ID '0' has not been registered!`
+- **Root cause**: UE 5.7's USelection holds TypedElement handles; destroying an actor without deselecting leaves stale handles
+- **Fix**: Call `GEditor->SelectActor(Actor, false, true)` before `Actor->Destroy()` in `UAActorCommands.cpp`
+
+### Repository Split
+- Extracted UnrealAgent from the Aura monorepo into a standalone repository: https://github.com/ky256/UnrealAgent
+- Aura now references UnrealAgent as a git submodule at `Plugins/UnrealAgent`
+- Python virtual environment (`.venv`) and build artifacts (`Binaries/`, `Intermediate/`) remain git-ignored and local only
+
 ---
 
 ## Backlog / Future Work
