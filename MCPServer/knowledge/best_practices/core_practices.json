@@ -1,0 +1,45 @@
+{
+  "category": "best_practices",
+  "entries": [
+    {
+      "id": "bp_material_editing_workflow",
+      "title": "材质编辑完整工作流",
+      "content": "构建材质的推荐操作顺序：\n\n1. 获取材质当前状态: get_material_graph\n2. 清空现有节点（从后往前删除）: delete_material_expression\n3. 创建节点: create_material_expression\n4. 设置节点属性: set_expression_value\n5. 连接节点之间: connect_material_expressions\n6. 连接到材质属性: connect_material_property\n7. 设置材质全局属性: set_material_property\n8. 重编译: recompile_material\n9. 自动排列: layout_material_expressions\n10. 验证: get_material_graph\n\n注意事项：\n- 删除节点要从后往前删（大索引先删），因为删除后索引会变化\n- 创建节点后记录返回的 expression_index，后续操作都需要它\n- 连接完成后必须 recompile_material 才能看到效果",
+      "tags": ["material", "workflow", "best-practice", "step-by-step"],
+      "confidence": 1.0,
+      "source": "manual"
+    },
+    {
+      "id": "bp_custom_hlsl_workflow",
+      "title": "Custom HLSL 节点的正确操作流程",
+      "content": "创建 Custom HLSL 节点的严格操作顺序（顺序不可打乱）：\n\n1. create_material_expression: expression_class='MaterialExpressionCustom'\n2. create_material_expression: 创建输入节点（如 Time, TextureCoordinate 等）\n3. connect_material_expressions: 将输入节点连接到 Custom 节点（必须先连接！）\n4. set_expression_value: InputName[0]='变量名'（HLSL 代码中引用的名称）\n5. set_expression_value: Code='HLSL代码（使用上面定义的变量名）'\n6. set_expression_value: Description='节点标题'\n7. set_expression_value: OutputType='CMOT_Float3'（或其他类型）\n8. connect_material_property: 连接到材质属性\n9. recompile_material: 编译材质\n\n⚠️ 第3步和第4步的顺序不能反：必须先连接输入才能设置 InputName，\n   因为连接时 Inputs 数组才会被填充。",
+      "tags": ["custom", "hlsl", "workflow", "best-practice", "material"],
+      "confidence": 1.0,
+      "source": "manual"
+    },
+    {
+      "id": "bp_command_registration_checklist",
+      "title": "新增命令的 4 文件注册 Checklist",
+      "content": "新增一组 UE 命令需要修改 4 个文件：\n\n1. Public/Commands/UAXxxCommands.h — 新建头文件，声明命令类\n   继承 UACommandBase，声明 RegisterCommands() 方法\n\n2. Private/Commands/UAXxxCommands.cpp — 新建实现文件\n   实现所有命令处理函数\n\n3. UnrealAgent.Build.cs — 添加模块依赖\n   PublicDependencyModuleNames.Add(\"需要的模块名\");\n\n4. Private/Commands/UACommandRegistry.cpp — 注册命令\n   添加 #include 和 RegisterCommand(MakeShared<UAXxxCommands>())\n\n命名规范：\n- 头文件/实现文件：UA{功能名}Commands.h/.cpp\n- 类名：UA{功能名}Commands\n- JSON-RPC 方法名：小写下划线，如 get_material_graph",
+      "tags": ["command", "registration", "checklist", "new-feature", "cpp"],
+      "confidence": 1.0,
+      "source": "manual"
+    },
+    {
+      "id": "bp_error_recovery",
+      "title": "错误恢复策略",
+      "content": "遇到问题时的排查优先级：\n\n1. 编译错误 → 先查 ue_api_gotchas 知识库，检查是否是 UE 版本变更\n2. 功能不生效 → 90% 是热加载问题，提示用户重启 UE 编辑器\n3. 材质编译报错 → 用 get_material_graph 检查节点图和连接状态\n4. InputName 相关错误 → 检查 Custom 节点操作顺序（参见 custom_hlsl_workflow）\n5. 连接失败 → 检查 expression_index 是否正确（删除节点后索引会变化）\n6. JSON-RPC 通信失败 → 检查 Content-Length 是否为 UTF-8 字节数\n\n通用恢复步骤：\n- undo: 撤销最近操作\n- get_material_graph: 查看当前状态\n- recompile_material: 重编译清除缓存",
+      "tags": ["error", "recovery", "troubleshooting", "debug", "best-practice"],
+      "confidence": 1.0,
+      "source": "manual"
+    },
+    {
+      "id": "bp_testing_strategy",
+      "title": "测试脚本编写最佳实践",
+      "content": "编写 UnrealAgent 测试脚本的最佳实践：\n\n1. 连通性验证：先用简单操作（如 get_material_graph）确认 TCP 连接正常\n2. 渐进式测试：从简单到复杂，每步验证\n   - 创建单个节点 → 设值 → 连接 → 编译\n   - 最后再做复杂场景测试\n3. 全量验证：操作完成后用 get_material_graph 获取完整节点图确认\n4. 编码处理：Windows 下使用 python -X utf8 运行\n5. 协议格式：JSON-RPC 2.0 + Content-Length header\n6. 清理策略：测试开始前先清空目标材质的节点，确保干净环境",
+      "tags": ["testing", "best-practice", "test-script", "validation"],
+      "confidence": 1.0,
+      "source": "manual"
+    }
+  ]
+}

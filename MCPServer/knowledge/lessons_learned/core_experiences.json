@@ -1,0 +1,56 @@
+{
+  "category": "lessons_learned",
+  "entries": [
+    {
+      "id": "lesson_custom_hlsl_inputname",
+      "title": "Custom HLSL 节点的 InputName 必须和代码中变量名一致",
+      "content": "Custom 节点的 HLSL 代码通过 InputName 引用输入值。如果 InputName 不匹配，着色器编译会报 'undeclared identifier' 错误。\n\n关键规则：\n1. HLSL 代码中的变量名必须和 InputName 完全一致\n2. 默认 InputName 是 'None'，必须手动设置\n3. 必须先连接输入节点（让 Inputs 数组被填充），然后才能设置 InputName\n\n正确操作顺序：\n1. 创建 Custom 节点\n2. 创建输入节点（如 Time）\n3. connect_material_expressions: 将 Time → Custom\n4. set_expression_value: InputName[0] = 'Time'\n5. set_expression_value: Code = 'float pulse = sin(Time * 6.28); ...'\n6. set_expression_value: OutputType = 'CMOT_Float3'\n7. recompile_material",
+      "tags": ["custom", "hlsl", "inputname", "material", "shader", "undeclared-identifier"],
+      "ue_version": "5.7",
+      "confidence": 1.0,
+      "source": "manual"
+    },
+    {
+      "id": "lesson_hot_reload_limitation",
+      "title": "UE 5.7 热加载不可靠，修改后须重启编辑器",
+      "content": "UE 5.7 的热加载（Live Coding）在某些情况下不会替换已加载的模块。\n\n表现：编译成功，DLL 后缀递增（如 -0001 → -0002），但编辑器仍运行旧 DLL 代码。\n\n解决方案：新增/修改函数逻辑后，必须重启 UE 编辑器确保加载新 DLL。\n\n验证方法：如果修改后的功能不生效，90% 概率是热加载问题。先重启再排查代码。",
+      "tags": ["hot-reload", "live-coding", "dll", "restart", "compilation"],
+      "ue_version": "5.7",
+      "confidence": 1.0,
+      "source": "manual"
+    },
+    {
+      "id": "lesson_compile_command_gitbash",
+      "title": "Git Bash 环境下的正确编译命令",
+      "content": "在 Git Bash 中不能直接使用 Build.bat（空格路径问题），需直接调用 UnrealBuildTool.exe：\n\n'/c/Program Files/Epic Games/UE_5.7/Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.exe' AuraEditor Win64 Development -Project='I:/Aura/Aura.uproject' -WaitMutex -FromMsBuild\n\n注意：\n- 路径需要用单引号包裹\n- 目标名是 AuraEditor（不是 Aura），因为是编辑器模块\n- -WaitMutex 防止并发编译冲突\n- -FromMsBuild 使输出格式更规整",
+      "tags": ["compilation", "git-bash", "windows", "unrealbuildtool", "build"],
+      "ue_version": "5.7",
+      "confidence": 1.0,
+      "source": "manual"
+    },
+    {
+      "id": "lesson_large_file_writing",
+      "title": "大文件写入策略：超过 600 行用 Python 脚本分段写入",
+      "content": "当 C++ 文件超过 600 行时，edit_file 工具可能触发输出限制，无法一次性写入。\n\n正确方案：\n1. 创建一个 Python 脚本，用 r\"\"\"...\"\"\" 原始字符串包含 C++ 内容\n2. 分 Part 1/2/3 写入：第一部分用 'w' 模式，后续用 'a' 追加\n3. 用 terminal 执行 Python 脚本\n\n后续小修改用 replace_in_file 或 multi_replace 精准修改即可。",
+      "tags": ["large-file", "file-writing", "python-script", "workaround"],
+      "confidence": 1.0,
+      "source": "manual"
+    },
+    {
+      "id": "lesson_test_script_encoding",
+      "title": "Windows 测试脚本 emoji 编码问题",
+      "content": "在 Windows 下运行包含 emoji（✅ ❌ 等）的 Python 测试脚本时，GBK 编码会报错。\n\n解决方案：使用 python -X utf8 test_xxx.py 运行，强制 UTF-8 模式。",
+      "tags": ["testing", "encoding", "windows", "emoji", "utf8", "python"],
+      "confidence": 1.0,
+      "source": "manual"
+    },
+    {
+      "id": "lesson_jsonrpc_protocol",
+      "title": "UnrealAgent 的 JSON-RPC 通信协议",
+      "content": "UnrealAgent TCP Server 使用标准 JSON-RPC 2.0 + Content-Length header 协议：\n\n请求格式：\n  Content-Length: {body字节数}\\r\\n\n  \\r\\n\n  {\"jsonrpc\":\"2.0\",\"method\":\"xxx\",\"params\":{...},\"id\":1}\n\n响应格式相同，header + body。\n\n注意：Content-Length 必须是 JSON body 的**字节数**（UTF-8 编码），不是字符数。",
+      "tags": ["protocol", "json-rpc", "tcp", "content-length", "communication"],
+      "confidence": 1.0,
+      "source": "manual"
+    }
+  ]
+}

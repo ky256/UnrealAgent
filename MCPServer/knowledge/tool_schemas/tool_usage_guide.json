@@ -1,0 +1,35 @@
+{
+  "category": "tool_schemas",
+  "entries": [
+    {
+      "id": "tool_material_group",
+      "title": "材质编辑工具组概览",
+      "content": "材质编辑相关的 11 个工具：\n\n查询类：\n- get_material_graph: 获取材质完整节点图（节点列表、连接关系、材质属性）\n- get_material_parameters: 获取材质的公开参数列表\n\n创建/删除类：\n- create_material_expression: 创建材质表达式节点\n- delete_material_expression: 删除指定索引的节点\n\n设值类：\n- set_expression_value: 设置节点属性值（颜色、参数名、HLSL代码等）\n- set_material_property: 设置材质全局属性（BlendMode、ShadingModel、TwoSided等）\n\n连接类：\n- connect_material_expressions: 连接两个节点\n- connect_material_property: 将节点连接到材质属性（BaseColor、Roughness等）\n- disconnect_material_property: 断开材质属性的连接\n\n编译/布局：\n- recompile_material: 重新编译材质着色器\n- layout_material_expressions: 自动排列节点",
+      "tags": ["material", "tools", "overview", "guide"]
+    },
+    {
+      "id": "tool_create_expression_usage",
+      "title": "create_material_expression 使用指南",
+      "content": "创建材质表达式节点。\n\n参数：\n- asset_path: 材质资产路径（如 /Game/Materials/M_Test）\n- expression_class: 表达式类名（不带 U 前缀，如 'MaterialExpressionConstant3Vector'）\n- node_pos_x: 节点在编辑器中的 X 位置（可选，默认 0）\n- node_pos_y: 节点在编辑器中的 Y 位置（可选，默认 0）\n\n返回：\n- expression_index: 创建的节点索引（后续操作需要此值）\n- expression_class: 节点类名\n\n常用 expression_class 值：\n- MaterialExpressionConstant\n- MaterialExpressionConstant3Vector\n- MaterialExpressionConstant4Vector\n- MaterialExpressionScalarParameter\n- MaterialExpressionVectorParameter\n- MaterialExpressionTextureSample\n- MaterialExpressionCustom\n- MaterialExpressionLinearInterpolate\n- MaterialExpressionAdd/Multiply/Subtract/Divide\n- MaterialExpressionTime\n- MaterialExpressionTextureCoordinate\n- MaterialExpressionFresnel\n- MaterialExpressionPanner",
+      "tags": ["create_material_expression", "tool", "usage", "guide", "material"]
+    },
+    {
+      "id": "tool_connect_expressions_usage",
+      "title": "connect_material_expressions 使用指南",
+      "content": "连接两个材质表达式节点。\n\n参数：\n- asset_path: 材质资产路径\n- from_index: 输出节点的索引\n- from_output: 输出 pin 名称（空字符串 '' 表示默认输出）\n- to_index: 输入节点的索引\n- to_input: 输入 pin 名称（如 'A'、'B'、'Alpha'、'UVs' 等）\n\n输入 pin 名称参考：\n- Lerp 节点: 'A', 'B', 'Alpha'\n- Add/Multiply/Subtract/Divide: 'A', 'B'\n- Power: 'Base', 'Exp'\n- TextureSample: 'UVs'\n- Custom 节点: '' (默认第一个输入)\n- Clamp: '', 'Min', 'Max'\n\n注意：\n- from_output 通常传空字符串即可\n- to_input 必须精确匹配节点的输入 pin 名称",
+      "tags": ["connect_material_expressions", "tool", "usage", "guide", "material", "connection"]
+    },
+    {
+      "id": "tool_set_expression_value_usage",
+      "title": "set_expression_value 使用指南",
+      "content": "设置材质表达式节点的属性值。\n\n参数：\n- asset_path: 材质资产路径\n- expression_index: 节点索引\n- property_name: 属性名（参见 set_expression_value 速查表）\n- value: 属性值字符串\n\nvalue 格式规则：\n1. 浮点数 → 直接传数字字符串: '1.0', '0.5'\n2. LinearColor → JSON 对象: '{\"r\":1,\"g\":0,\"b\":0,\"a\":1}'\n3. 字符串 → 直接传: 'MyParamName'\n4. 纹理 → 资产路径: '/Game/Textures/T_Wood'\n5. 枚举 → 枚举名: 'CMOT_Float3'\n\n⚠️ Custom 节点的特殊属性：\n- 'Code': HLSL 代码字符串\n- 'Description': 节点标题\n- 'OutputType': CMOT_Float1/2/3/4/MaterialAttributes\n- 'InputName[N]': 第 N 个输入名称（N 从 0 开始）",
+      "tags": ["set_expression_value", "tool", "usage", "guide", "material", "property"]
+    },
+    {
+      "id": "tool_general_group",
+      "title": "通用工具组概览",
+      "content": "通用工具：\n\n项目信息：\n- get_project_info: 获取项目名、引擎版本、模块列表\n- get_editor_state: 获取当前关卡、PIE状态、选中的Actor\n\n资产管理：\n- list_assets: 列出目录下的资产\n- search_assets: 按名称搜索资产\n- get_asset_info: 获取资产详细信息\n- get_asset_references: 获取资产引用关系\n\n世界操作：\n- get_world_outliner: 获取关卡中的所有 Actor\n- get_current_level: 获取当前关卡信息\n\nActor 操作：\n- create_actor: 创建 Actor\n- delete_actor: 删除 Actor\n- get_actor_details: 获取 Actor 详情\n- select_actors: 选中 Actor\n\n视口：\n- get_viewport_camera: 获取摄像机位置\n- move_viewport_camera: 移动摄像机\n- focus_on_actor: 聚焦到 Actor\n\n编辑器：\n- undo: 撤销\n- redo: 重做\n\nPython 执行：\n- execute_python: 在 UE 编辑器中执行 Python 代码\n- reset_python_context: 重置 Python 执行上下文\n\n知识库：\n- query_knowledge: 查询知识库\n- save_knowledge: 保存经验到知识库\n- get_knowledge_stats: 获取知识库统计",
+      "tags": ["tools", "overview", "general", "guide"]
+    }
+  ]
+}

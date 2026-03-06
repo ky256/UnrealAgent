@@ -1,0 +1,360 @@
+{
+  "MaterialExpressionConstant": {
+    "title": "Constant (浮点常量)",
+    "description": "单精度浮点常量节点，输出一个 float 值",
+    "outputs": [{"name": "", "type": "float"}],
+    "inputs": [],
+    "settable_properties": {
+      "R": {"type": "float", "description": "常量值", "example": "1.0"}
+    },
+    "tags": ["constant", "float", "scalar", "material"]
+  },
+  "MaterialExpressionConstant2Vector": {
+    "title": "Constant2Vector (二维常量)",
+    "description": "输出一个 float2 值",
+    "outputs": [{"name": "", "type": "float2"}],
+    "inputs": [],
+    "settable_properties": {
+      "R": {"type": "float", "description": "第一个分量"},
+      "G": {"type": "float", "description": "第二个分量"}
+    },
+    "tags": ["constant", "vector", "float2", "material"]
+  },
+  "MaterialExpressionConstant3Vector": {
+    "title": "Constant3Vector (RGB颜色常量)",
+    "description": "RGB颜色常量节点，输出 float3（带颜色选择器）",
+    "outputs": [
+      {"name": "RGB", "type": "float3"},
+      {"name": "R", "type": "float"},
+      {"name": "G", "type": "float"},
+      {"name": "B", "type": "float"}
+    ],
+    "inputs": [],
+    "settable_properties": {
+      "Constant": {
+        "type": "LinearColor",
+        "description": "颜色值",
+        "format": "{\"r\":1,\"g\":0,\"b\":0,\"a\":1}",
+        "example": "{\"r\":0.5,\"g\":0.8,\"b\":0.2,\"a\":1.0}"
+      }
+    },
+    "tags": ["constant", "color", "vector", "float3", "material"]
+  },
+  "MaterialExpressionConstant4Vector": {
+    "title": "Constant4Vector (RGBA颜色常量)",
+    "description": "RGBA颜色常量节点",
+    "outputs": [{"name": "", "type": "float4"}],
+    "inputs": [],
+    "settable_properties": {
+      "Constant": {
+        "type": "LinearColor",
+        "description": "颜色值（含 Alpha）",
+        "format": "{\"r\":1,\"g\":0,\"b\":0,\"a\":1}"
+      }
+    },
+    "tags": ["constant", "color", "vector", "float4", "material"]
+  },
+  "MaterialExpressionScalarParameter": {
+    "title": "ScalarParameter (标量参数)",
+    "description": "可在材质实例中调节的 float 参数",
+    "outputs": [{"name": "", "type": "float"}],
+    "inputs": [],
+    "settable_properties": {
+      "ParameterName": {"type": "string", "description": "参数名称", "example": "Roughness"},
+      "DefaultValue": {"type": "float", "description": "默认值", "example": "0.5"}
+    },
+    "tags": ["parameter", "scalar", "float", "material-instance", "material"]
+  },
+  "MaterialExpressionVectorParameter": {
+    "title": "VectorParameter (向量参数)",
+    "description": "可在材质实例中调节的颜色/向量参数",
+    "outputs": [
+      {"name": "RGB", "type": "float3"},
+      {"name": "R", "type": "float"},
+      {"name": "G", "type": "float"},
+      {"name": "B", "type": "float"},
+      {"name": "A", "type": "float"}
+    ],
+    "inputs": [],
+    "settable_properties": {
+      "ParameterName": {"type": "string", "description": "参数名称", "example": "BaseColor"},
+      "DefaultValue": {
+        "type": "LinearColor",
+        "description": "默认颜色值",
+        "format": "{\"r\":1,\"g\":0,\"b\":0,\"a\":1}"
+      }
+    },
+    "tags": ["parameter", "vector", "color", "material-instance", "material"]
+  },
+  "MaterialExpressionStaticSwitchParameter": {
+    "title": "StaticSwitchParameter (静态开关参数)",
+    "description": "在材质实例中切换两个分支的布尔参数，编译时确定",
+    "outputs": [{"name": "", "type": "any"}],
+    "inputs": [
+      {"name": "True", "type": "any"},
+      {"name": "False", "type": "any"}
+    ],
+    "settable_properties": {
+      "ParameterName": {"type": "string", "description": "参数名称"},
+      "DefaultValue": {"type": "bool", "description": "默认值 true/false"}
+    },
+    "tags": ["parameter", "switch", "boolean", "material-instance", "material"]
+  },
+  "MaterialExpressionTextureSample": {
+    "title": "TextureSample (纹理采样)",
+    "description": "采样一个纹理资源，输出颜色和各通道",
+    "outputs": [
+      {"name": "RGB", "type": "float3"},
+      {"name": "R", "type": "float"},
+      {"name": "G", "type": "float"},
+      {"name": "B", "type": "float"},
+      {"name": "A", "type": "float"}
+    ],
+    "inputs": [
+      {"name": "UVs", "type": "float2", "optional": true}
+    ],
+    "settable_properties": {
+      "texture_path": {
+        "type": "string",
+        "description": "纹理资产路径（通过 set_expression_value 专属处理）",
+        "example": "/Game/Textures/T_Wood_BaseColor"
+      }
+    },
+    "important_notes": [
+      "使用 set_expression_value 时 property_name 为 'texture_path'",
+      "value 为纹理资产的完整路径如 '/Game/Textures/T_Wood'"
+    ],
+    "tags": ["texture", "sample", "uv", "material"]
+  },
+  "MaterialExpressionTextureCoordinate": {
+    "title": "TextureCoordinate (纹理坐标)",
+    "description": "输出 UV 纹理坐标，可设置 Tiling 和 Offset",
+    "outputs": [{"name": "", "type": "float2"}],
+    "inputs": [],
+    "settable_properties": {
+      "UTiling": {"type": "float", "description": "U方向平铺次数"},
+      "VTiling": {"type": "float", "description": "V方向平铺次数"},
+      "CoordinateIndex": {"type": "int", "description": "UV通道索引"}
+    },
+    "tags": ["uv", "coordinate", "tiling", "material"]
+  },
+  "MaterialExpressionTime": {
+    "title": "Time (时间)",
+    "description": "输出引擎时间（秒），用于动画效果",
+    "outputs": [{"name": "", "type": "float"}],
+    "inputs": [],
+    "settable_properties": {},
+    "tags": ["time", "animation", "dynamic", "material"]
+  },
+  "MaterialExpressionCustom": {
+    "title": "Custom (自定义HLSL代码)",
+    "description": "自定义HLSL代码节点，可编写任意着色器逻辑",
+    "outputs": [{"name": "", "type": "depends on OutputType"}],
+    "inputs": [{"name": "动态，通过 InputName[N] 设置", "type": "any"}],
+    "settable_properties": {
+      "Code": {"type": "string", "description": "HLSL 代码", "example": "return float3(1,0,0);"},
+      "Description": {"type": "string", "description": "节点显示标题", "example": "PulseGlow"},
+      "OutputType": {
+        "type": "enum",
+        "description": "输出类型",
+        "values": ["CMOT_Float1", "CMOT_Float2", "CMOT_Float3", "CMOT_Float4", "CMOT_MaterialAttributes"]
+      },
+      "InputName[N]": {
+        "type": "string",
+        "description": "第N个输入的名称，N从0开始。HLSL代码中必须用此名称引用输入值",
+        "example": "Time"
+      }
+    },
+    "important_notes": [
+      "⚠️ HLSL代码中的变量名必须和InputName完全一致，否则报 'undeclared identifier'",
+      "⚠️ 操作顺序很重要：1.创建节点 → 2.连接输入 → 3.设InputName[0] → 4.设Code → 5.设OutputType → 6.重编译",
+      "必须先连接输入节点（如Time），这样Inputs数组才会被填充，然后才能设置InputName",
+      "如果不设置InputName，默认名称是'None'，HLSL编译会失败"
+    ],
+    "tags": ["custom", "hlsl", "code", "shader", "material"]
+  },
+  "MaterialExpressionLinearInterpolate": {
+    "title": "LinearInterpolate / Lerp (线性插值)",
+    "description": "在 A 和 B 之间按 Alpha 线性插值：result = A * (1-Alpha) + B * Alpha",
+    "outputs": [{"name": "", "type": "same as inputs"}],
+    "inputs": [
+      {"name": "A", "type": "any"},
+      {"name": "B", "type": "any"},
+      {"name": "Alpha", "type": "float"}
+    ],
+    "settable_properties": {},
+    "tags": ["lerp", "interpolate", "blend", "mix", "material"]
+  },
+  "MaterialExpressionAdd": {
+    "title": "Add (加法)",
+    "description": "两个值相加",
+    "outputs": [{"name": "", "type": "same as inputs"}],
+    "inputs": [
+      {"name": "A", "type": "any"},
+      {"name": "B", "type": "any"}
+    ],
+    "tags": ["math", "add", "material"]
+  },
+  "MaterialExpressionMultiply": {
+    "title": "Multiply (乘法)",
+    "description": "两个值相乘",
+    "outputs": [{"name": "", "type": "same as inputs"}],
+    "inputs": [
+      {"name": "A", "type": "any"},
+      {"name": "B", "type": "any"}
+    ],
+    "tags": ["math", "multiply", "material"]
+  },
+  "MaterialExpressionSubtract": {
+    "title": "Subtract (减法)",
+    "description": "A 减 B",
+    "outputs": [{"name": "", "type": "same as inputs"}],
+    "inputs": [
+      {"name": "A", "type": "any"},
+      {"name": "B", "type": "any"}
+    ],
+    "tags": ["math", "subtract", "material"]
+  },
+  "MaterialExpressionDivide": {
+    "title": "Divide (除法)",
+    "description": "A 除以 B",
+    "outputs": [{"name": "", "type": "same as inputs"}],
+    "inputs": [
+      {"name": "A", "type": "any"},
+      {"name": "B", "type": "any"}
+    ],
+    "tags": ["math", "divide", "material"]
+  },
+  "MaterialExpressionPower": {
+    "title": "Power (幂运算)",
+    "description": "Base 的 Exp 次幂",
+    "outputs": [{"name": "", "type": "float"}],
+    "inputs": [
+      {"name": "Base", "type": "float"},
+      {"name": "Exp", "type": "float"}
+    ],
+    "tags": ["math", "power", "material"]
+  },
+  "MaterialExpressionClamp": {
+    "title": "Clamp (限制范围)",
+    "description": "将输入限制在 Min 和 Max 之间",
+    "outputs": [{"name": "", "type": "same as input"}],
+    "inputs": [
+      {"name": "", "type": "any"},
+      {"name": "Min", "type": "float"},
+      {"name": "Max", "type": "float"}
+    ],
+    "tags": ["math", "clamp", "range", "material"]
+  },
+  "MaterialExpressionSine": {
+    "title": "Sine (正弦)",
+    "description": "计算正弦值，输入为 [0,1] 范围（不是弧度）",
+    "outputs": [{"name": "", "type": "float"}],
+    "inputs": [{"name": "", "type": "float"}],
+    "tags": ["math", "sine", "trig", "material"]
+  },
+  "MaterialExpressionCosine": {
+    "title": "Cosine (余弦)",
+    "description": "计算余弦值",
+    "outputs": [{"name": "", "type": "float"}],
+    "inputs": [{"name": "", "type": "float"}],
+    "tags": ["math", "cosine", "trig", "material"]
+  },
+  "MaterialExpressionOneMinus": {
+    "title": "OneMinus (1-x)",
+    "description": "计算 1 减去输入值，常用于反转",
+    "outputs": [{"name": "", "type": "same as input"}],
+    "inputs": [{"name": "", "type": "any"}],
+    "tags": ["math", "invert", "oneminus", "material"]
+  },
+  "MaterialExpressionAppendVector": {
+    "title": "AppendVector (向量拼接)",
+    "description": "将两个值拼接为更高维向量，如 float + float = float2",
+    "outputs": [{"name": "", "type": "combined"}],
+    "inputs": [
+      {"name": "A", "type": "any"},
+      {"name": "B", "type": "any"}
+    ],
+    "tags": ["vector", "append", "combine", "material"]
+  },
+  "MaterialExpressionComponentMask": {
+    "title": "ComponentMask (通道遮罩)",
+    "description": "从向量中提取指定通道，如只取 R 和 G",
+    "outputs": [{"name": "", "type": "depends on mask"}],
+    "inputs": [{"name": "", "type": "vector"}],
+    "settable_properties": {
+      "R": {"type": "bool", "description": "是否输出R通道"},
+      "G": {"type": "bool", "description": "是否输出G通道"},
+      "B": {"type": "bool", "description": "是否输出B通道"},
+      "A": {"type": "bool", "description": "是否输出A通道"}
+    },
+    "tags": ["vector", "mask", "channel", "swizzle", "material"]
+  },
+  "MaterialExpressionFresnel": {
+    "title": "Fresnel (菲涅尔)",
+    "description": "计算菲涅尔效果，边缘发光/反射",
+    "outputs": [{"name": "", "type": "float"}],
+    "inputs": [
+      {"name": "ExponentIn", "type": "float", "optional": true},
+      {"name": "BaseReflectFractionIn", "type": "float", "optional": true},
+      {"name": "Normal", "type": "float3", "optional": true}
+    ],
+    "tags": ["fresnel", "rim", "edge", "reflection", "material"]
+  },
+  "MaterialExpressionWorldPosition": {
+    "title": "WorldPosition (世界坐标)",
+    "description": "输出像素的世界空间位置",
+    "outputs": [{"name": "", "type": "float3"}],
+    "inputs": [],
+    "tags": ["position", "world", "coordinate", "material"]
+  },
+  "MaterialExpressionVertexNormalWS": {
+    "title": "VertexNormalWS (世界法线)",
+    "description": "输出顶点的世界空间法线",
+    "outputs": [{"name": "", "type": "float3"}],
+    "inputs": [],
+    "tags": ["normal", "world", "vertex", "material"]
+  },
+  "MaterialExpressionPanner": {
+    "title": "Panner (UV平移动画)",
+    "description": "按时间平移 UV 坐标，制作滚动纹理效果",
+    "outputs": [{"name": "", "type": "float2"}],
+    "inputs": [
+      {"name": "Coordinate", "type": "float2", "optional": true},
+      {"name": "Time", "type": "float", "optional": true},
+      {"name": "Speed", "type": "float2", "optional": true}
+    ],
+    "settable_properties": {
+      "SpeedX": {"type": "float", "description": "X方向平移速度"},
+      "SpeedY": {"type": "float", "description": "Y方向平移速度"}
+    },
+    "tags": ["panner", "uv", "scroll", "animation", "material"]
+  },
+  "MaterialExpressionNormalize": {
+    "title": "Normalize (归一化)",
+    "description": "将向量归一化为单位长度",
+    "outputs": [{"name": "", "type": "same as input"}],
+    "inputs": [{"name": "", "type": "vector"}],
+    "tags": ["math", "normalize", "vector", "material"]
+  },
+  "MaterialExpressionDotProduct": {
+    "title": "DotProduct (点积)",
+    "description": "计算两个向量的点积",
+    "outputs": [{"name": "", "type": "float"}],
+    "inputs": [
+      {"name": "A", "type": "vector"},
+      {"name": "B", "type": "vector"}
+    ],
+    "tags": ["math", "dot", "product", "vector", "material"]
+  },
+  "MaterialExpressionCrossProduct": {
+    "title": "CrossProduct (叉积)",
+    "description": "计算两个 float3 向量的叉积",
+    "outputs": [{"name": "", "type": "float3"}],
+    "inputs": [
+      {"name": "A", "type": "float3"},
+      {"name": "B", "type": "float3"}
+    ],
+    "tags": ["math", "cross", "product", "vector", "material"]
+  }
+}

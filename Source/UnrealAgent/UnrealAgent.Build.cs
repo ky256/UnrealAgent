@@ -24,6 +24,7 @@ public class UnrealAgent : ModuleRules
 			"AssetRegistry",     // IAssetRegistry
 			"ToolMenus",         // UToolMenus
 			"DeveloperSettings", // UDeveloperSettings
+			"MaterialEditor",    // UMaterialEditingLibrary
 		});
 
 		// PythonScriptPlugin: header-only include (runtime optional via IPythonScriptPlugin::Get())

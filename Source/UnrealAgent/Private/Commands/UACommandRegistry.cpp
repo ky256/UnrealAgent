@@ -9,6 +9,7 @@
 #include "Commands/UAViewportCommands.h"
 #include "Commands/UAPythonCommands.h"
 #include "Commands/UAEditorCommands.h"
+#include "Commands/UAMaterialCommands.h"
 #include "UnrealAgent.h"
 
 UACommandRegistry::UACommandRegistry()
@@ -21,6 +22,7 @@ UACommandRegistry::UACommandRegistry()
 	RegisterCommand(MakeShared<UAViewportCommands>());
 	RegisterCommand(MakeShared<UAPythonCommands>());
 	RegisterCommand(MakeShared<UAEditorCommands>());
+	RegisterCommand(MakeShared<UAMaterialCommands>());
 }
 
 void UACommandRegistry::RegisterCommand(TSharedPtr<UACommandBase> Command)

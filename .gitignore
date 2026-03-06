@@ -29,3 +29,7 @@ Thumbs.db
 
 # Obsidian
 .obsidian/
+
+# Test scripts
+MCPServer/test_*.py
+MCPServer/query_*.py

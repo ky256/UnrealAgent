@@ -3,6 +3,7 @@
 #include "Commands/UAEditorCommands.h"
 #include "UnrealAgent.h"
 #include "Editor.h"
+#include "Editor/Transactor.h"
 #include "Misc/ITransaction.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogUAEditor, Log, All);
@@ -108,8 +109,8 @@ bool UAEditorCommands::ExecuteUndo(
 		}
 
 		// Get the description of what we're about to undo
-		FTransactionContext Context;
-		if (GEditor->Trans->GetUndoContext(false, Context))
+		FTransactionContext Context = GEditor->Trans->GetUndoContext(false);
+		if (!Context.Title.IsEmpty())
 		{
 			UndoneDescriptions.Add(Context.Title.ToString());
 		}
@@ -179,8 +180,8 @@ bool UAEditorCommands::ExecuteRedo(
 			break;
 		}
 
-		FTransactionContext Context;
-		if (GEditor->Trans->GetUndoContext(true, Context))
+		FTransactionContext Context = GEditor->Trans->GetUndoContext(true);
+		if (!Context.Title.IsEmpty())
 		{
 			RedoneDescriptions.Add(Context.Title.ToString());
 		}

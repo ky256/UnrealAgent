@@ -1,0 +1,76 @@
+{
+  "material_properties_enum": {
+    "title": "EMaterialProperty 材质属性枚举映射",
+    "description": "connect_material_property 工具中 property 参数的可选值",
+    "tags": ["enum", "material-property", "connect"],
+    "properties": {
+      "MP_BaseColor": "基础颜色 — 物体表面的漫反射颜色",
+      "MP_Metallic": "金属度 — 0=非金属, 1=全金属",
+      "MP_Specular": "高光强度 — 非金属表面的高光反射率",
+      "MP_Roughness": "粗糙度 — 0=镜面光滑, 1=完全粗糙",
+      "MP_Normal": "法线贴图 — 用于细节凹凸效果",
+      "MP_EmissiveColor": "自发光颜色 — 材质自身发出的光（不受光照影响）",
+      "MP_Opacity": "不透明度 — 半透明材质的透明度（需要 Translucent 混合模式）",
+      "MP_OpacityMask": "不透明遮罩 — Masked 混合模式下的裁剪阈值",
+      "MP_AmbientOcclusion": "环境光遮蔽 — 缝隙和凹陷处的阴影",
+      "MP_WorldPositionOffset": "世界位置偏移 — 顶点着色器中偏移顶点位置",
+      "MP_SubsurfaceColor": "次表面颜色 — SSS 材质的内部散射颜色",
+      "MP_Refraction": "折射 — 透明材质的折射效果"
+    }
+  },
+  "blend_modes_enum": {
+    "title": "EBlendMode 混合模式枚举",
+    "description": "set_material_property 工具设置 BlendMode 的可选值",
+    "tags": ["enum", "blend-mode", "material"],
+    "values": {
+      "BLEND_Opaque": "不透明（默认）— 完全遮挡背后的物体",
+      "BLEND_Translucent": "半透明 — 支持 Opacity",
+      "BLEND_Additive": "叠加 — 颜色相加，用于发光粒子效果",
+      "BLEND_Modulate": "调制 — 颜色相乘，用于解码贴图",
+      "BLEND_Masked": "遮罩 — 基于 OpacityMask 做硬裁剪"
+    }
+  },
+  "shading_models_enum": {
+    "title": "EMaterialShadingModel 着色模型枚举",
+    "description": "set_material_property 工具设置 ShadingModel 的可选值",
+    "tags": ["enum", "shading-model", "material"],
+    "values": {
+      "Unlit": "无光照 — 不受场景光照影响，仅显示自发光颜色",
+      "DefaultLit": "默认光照（PBR）— 标准的基于物理的渲染",
+      "Subsurface": "次表面散射 — 皮肤、蜡烛等半透明材质",
+      "ClearCoat": "清漆 — 车漆、指甲油等双层材质",
+      "SubsurfaceProfile": "次表面 Profile — 更精确的皮肤渲染"
+    }
+  },
+  "custom_output_types_enum": {
+    "title": "ECustomMaterialOutputType Custom节点输出类型枚举",
+    "description": "Custom HLSL 节点 OutputType 的可选值",
+    "tags": ["enum", "custom", "hlsl", "output-type"],
+    "values": {
+      "CMOT_Float1": "float — 单精度浮点数",
+      "CMOT_Float2": "float2 — 二维向量",
+      "CMOT_Float3": "float3 — 三维向量/RGB颜色",
+      "CMOT_Float4": "float4 — 四维向量/RGBA颜色",
+      "CMOT_MaterialAttributes": "MaterialAttributes — 完整的材质属性结构"
+    }
+  },
+  "set_expression_value_reference": {
+    "title": "set_expression_value 属性速查表",
+    "description": "各节点类型通过 set_expression_value 可设置的 property_name 和 value 格式",
+    "tags": ["set_expression_value", "property", "reference", "material"],
+    "entries": [
+      {"node_type": "Constant", "property_name": "R", "value_format": "浮点数字符串", "example": "1.0"},
+      {"node_type": "Constant3Vector", "property_name": "Constant", "value_format": "JSON LinearColor", "example": "{\"r\":1,\"g\":0,\"b\":0,\"a\":1}"},
+      {"node_type": "Constant4Vector", "property_name": "Constant", "value_format": "JSON LinearColor", "example": "{\"r\":1,\"g\":0,\"b\":0,\"a\":1}"},
+      {"node_type": "ScalarParameter", "property_name": "ParameterName", "value_format": "字符串", "example": "Roughness"},
+      {"node_type": "ScalarParameter", "property_name": "DefaultValue", "value_format": "浮点数字符串", "example": "0.5"},
+      {"node_type": "VectorParameter", "property_name": "ParameterName", "value_format": "字符串", "example": "BaseColor"},
+      {"node_type": "VectorParameter", "property_name": "DefaultValue", "value_format": "JSON LinearColor", "example": "{\"r\":0.1,\"g\":0.3,\"b\":0.8,\"a\":1}"},
+      {"node_type": "TextureSample", "property_name": "texture_path", "value_format": "资产路径字符串", "example": "/Game/Textures/T_Wood"},
+      {"node_type": "Custom", "property_name": "Code", "value_format": "HLSL代码字符串", "example": "return float3(1,0,0);"},
+      {"node_type": "Custom", "property_name": "Description", "value_format": "节点标题字符串", "example": "PulseGlow"},
+      {"node_type": "Custom", "property_name": "OutputType", "value_format": "枚举字符串", "example": "CMOT_Float3"},
+      {"node_type": "Custom", "property_name": "InputName[N]", "value_format": "输入名字符串（N从0开始）", "example": "Time"}
+    ]
+  }
+}

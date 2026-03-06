@@ -1,0 +1,32 @@
+{
+  "category": "ue_api_gotchas",
+  "entries": [
+    {
+      "id": "ue57_getexpressions_return_type",
+      "title": "UE 5.7: GetExpressions() 返回类型变更",
+      "content": "UE 5.7 中 UMaterial::GetExpressions() 返回 TArrayView 而非 const TArray&。\n\n错误写法（UE 5.6 及之前）：\n  const TArray<TObjectPtr<UMaterialExpression>>& Exprs = Mat->GetExpressions();\n\n正确写法（UE 5.7）：\n  auto Exprs = Mat->GetExpressions();\n\n使用 auto 接收最安全，兼容所有版本。",
+      "tags": ["ue57", "api-breaking-change", "material", "getexpressions", "tarray", "tarrayview"],
+      "ue_version": "5.7",
+      "confidence": 1.0,
+      "source": "manual"
+    },
+    {
+      "id": "ue57_any_package_compat_removed",
+      "title": "UE 5.7: ANY_PACKAGE_COMPAT 宏已移除",
+      "content": "UE 5.7 中 ANY_PACKAGE_COMPAT 宏已被删除。\n\n错误写法：\n  FindObject<UClass>(ANY_PACKAGE_COMPAT, *ClassName)\n\n正确写法：\n  FindFirstObject<UClass>(*ClassName, EFindFirstObjectOptions::NativeFirst)\n\n注意 FindFirstObject 的参数顺序和 FindObject 不同。",
+      "tags": ["ue57", "api-breaking-change", "findclass", "any_package_compat", "findfirstobject"],
+      "ue_version": "5.7",
+      "confidence": 1.0,
+      "source": "manual"
+    },
+    {
+      "id": "ue57_materialeditor_module",
+      "title": "UE 5.7: 材质编辑核心模块依赖",
+      "content": "材质编辑 API（UMaterialEditingLibrary）在 MaterialEditor 模块中。\n\n正确的 Build.cs 依赖：\n  PublicDependencyModuleNames.Add(\"MaterialEditor\");\n\n不需要也不应该添加 EditorScriptingUtilities 模块（会导致 C1083 编译错误）。",
+      "tags": ["ue57", "module", "materialeditor", "build-cs", "dependency"],
+      "ue_version": "5.7",
+      "confidence": 1.0,
+      "source": "manual"
+    }
+  ]
+}
