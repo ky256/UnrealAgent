@@ -10,7 +10,7 @@ def main():
     from .server import mcp
 
     # Import tools to register them
-    from .tools import project, assets, world, actors, viewport, python, editor, knowledge  # noqa: F401
+    from .tools import project, assets, world, actors, viewport, python, editor, knowledge, materials  # noqa: F401
 
     mcp.run(transport="stdio")
 
