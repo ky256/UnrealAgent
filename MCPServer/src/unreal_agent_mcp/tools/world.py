@@ -38,6 +38,7 @@ async def get_actor_details(actor_name: str) -> dict:
 
     Returns full transform, components list, tags, and flags.
     """
+    record_tool_call("get_actor_details")
     return await connection.send_request(
         "get_actor_details", {"actor_name": actor_name}
     )

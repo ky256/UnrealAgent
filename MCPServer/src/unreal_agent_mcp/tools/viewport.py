@@ -57,6 +57,7 @@ async def focus_on_actor(actor_name: str) -> dict:
     Args:
         actor_name: The label or name of the actor to focus on.
     """
+    record_tool_call("focus_on_actor")
     return await connection.send_request(
         "focus_on_actor", {"actor_name": actor_name}
     )

@@ -1,6 +1,7 @@
 """Asset management tools."""
 
 from ..server import mcp, connection
+from .python import record_tool_call
 
 
 @mcp.tool()
@@ -61,6 +62,7 @@ async def get_asset_references(asset_path: str) -> dict:
     Returns lists of referencers (what uses this asset)
     and dependencies (what this asset uses).
     """
+    record_tool_call("get_asset_references")
     return await connection.send_request(
         "get_asset_references", {"asset_path": asset_path}
     )

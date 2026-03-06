@@ -31,6 +31,12 @@ private:
 	/** Check if the Python scripting plugin is available */
 	bool IsPythonAvailable(FString& OutError) const;
 
+	/** Wrap user code with timeout watchdog and undo transaction */
+	FString WrapCodeWithSafeguards(const FString& UserCode, float TimeoutSeconds, const FString& TransactionName) const;
+
 	/** Maximum output length in characters (default 64KB) */
 	static constexpr int32 MaxOutputLength = 65536;
+
+	/** Default timeout for Python execution in seconds */
+	static constexpr float DefaultTimeoutSeconds = 30.0f;
 };

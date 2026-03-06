@@ -69,6 +69,7 @@ async def select_actors(actor_names: list[str]) -> dict:
         actor_names: List of actor label/names to select.
                     Pass an empty list to clear the selection.
     """
+    record_tool_call("select_actors")
     return await connection.send_request(
         "select_actors", {"actor_names": actor_names}
     )

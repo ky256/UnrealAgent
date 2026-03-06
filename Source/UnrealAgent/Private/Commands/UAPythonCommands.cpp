@@ -33,6 +33,24 @@ TSharedPtr<FJsonObject> UAPythonCommands::GetToolSchema(const FString& MethodNam
 				 "Use print() for output. Context is shared across calls (stateful)."));
 		Properties->SetObjectField(TEXT("code"), CodeProp);
 
+		// timeout_seconds parameter (optional)
+		TSharedPtr<FJsonObject> TimeoutProp = MakeShared<FJsonObject>();
+		TimeoutProp->SetStringField(TEXT("type"), TEXT("number"));
+		TimeoutProp->SetStringField(TEXT("description"),
+			TEXT("Execution timeout in seconds (default 30, max 120). "
+				 "Prevents infinite loops from freezing the editor."));
+		Properties->SetObjectField(TEXT("timeout_seconds"), TimeoutProp);
+
+		// transaction_name parameter (optional)
+		TSharedPtr<FJsonObject> TransProp = MakeShared<FJsonObject>();
+		TransProp->SetStringField(TEXT("type"), TEXT("string"));
+		TransProp->SetStringField(TEXT("description"),
+			TEXT("Human-readable name for the undo transaction. "
+				 "Appears in Edit > Undo History. "
+				 "Example: 'Set 12 lights brightness to 5000'. "
+				 "Defaults to 'UnrealAgent Python' if not provided."));
+		Properties->SetObjectField(TEXT("transaction_name"), TransProp);
+
 		InputSchema->SetObjectField(TEXT("properties"), Properties);
 
 		TArray<TSharedPtr<FJsonValue>> Required;
@@ -44,7 +62,8 @@ TSharedPtr<FJsonObject> UAPythonCommands::GetToolSchema(const FString& MethodNam
 			TEXT("Execute Python code in the Unreal Editor context. "
 				 "Has access to the full 'unreal' module API. "
 				 "Context is stateful — variables and imports persist across calls. "
-				 "Use print() to produce output."),
+				 "Use print() to produce output. "
+				 "Operations are wrapped in an undo transaction (Ctrl+Z to revert)."),
 			InputSchema
 		);
 	}
@@ -109,6 +128,54 @@ bool UAPythonCommands::IsPythonAvailable(FString& OutError) const
 	return true;
 }
 
+FString UAPythonCommands::WrapCodeWithSafeguards(const FString& UserCode, float TimeoutSeconds, const FString& TransactionName) const
+{
+	// Escape the user code for embedding in a Python string literal
+	FString EscapedCode = UserCode;
+	EscapedCode.ReplaceInline(TEXT("\\"), TEXT("\\\\"));
+	EscapedCode.ReplaceInline(TEXT("\"\"\""), TEXT("\\\"\\\"\\\""));
+
+	// Escape the transaction name for Python string
+	FString EscapedTransName = TransactionName;
+	EscapedTransName.ReplaceInline(TEXT("'"), TEXT("\\'"));
+
+	// Build the wrapper script:
+	// 1. Start a timeout watchdog thread that will interrupt_main() after N seconds
+	// 2. Wrap execution in a named Unreal undo transaction
+	// 3. Execute user code via exec() in a persistent namespace
+	// 4. Cancel the watchdog on completion
+	return FString::Printf(TEXT(
+		"import threading as _ua_threading\n"
+		"import _thread as _ua_thread\n"
+		"\n"
+		"# --- Timeout watchdog ---\n"
+		"_ua_timed_out = False\n"
+		"def _ua_watchdog():\n"
+		"    global _ua_timed_out\n"
+		"    _ua_timed_out = True\n"
+		"    _ua_thread.interrupt_main()\n"
+		"_ua_timer = _ua_threading.Timer(%.1f, _ua_watchdog)\n"
+		"_ua_timer.daemon = True\n"
+		"_ua_timer.start()\n"
+		"\n"
+		"try:\n"
+		"    # --- Undo transaction ---\n"
+		"    import unreal as _ua_unreal\n"
+		"    with _ua_unreal.ScopedEditorTransaction('%s'):\n"
+		"        exec(\"\"\"%s\"\"\")\n"
+		"except KeyboardInterrupt:\n"
+		"    if _ua_timed_out:\n"
+		"        print('[UnrealAgent] ERROR: Execution timed out after %.0f seconds')\n"
+		"    else:\n"
+		"        print('[UnrealAgent] Execution interrupted')\n"
+		"except Exception as _ua_e:\n"
+		"    import traceback as _ua_tb\n"
+		"    _ua_tb.print_exc()\n"
+		"finally:\n"
+		"    _ua_timer.cancel()\n"
+	), TimeoutSeconds, *EscapedTransName, *EscapedCode, TimeoutSeconds);
+}
+
 bool UAPythonCommands::ExecutePython(
 	const TSharedPtr<FJsonObject>& Params,
 	TSharedPtr<FJsonObject>& OutResult,
@@ -128,14 +195,36 @@ bool UAPythonCommands::ExecutePython(
 		return false;
 	}
 
-	UE_LOG(LogUAPython, Log, TEXT("Executing Python (%d chars)"), Code.Len());
+	// Extract optional timeout (clamp to [1, 120] seconds)
+	float TimeoutSeconds = DefaultTimeoutSeconds;
+	if (Params->HasField(TEXT("timeout_seconds")))
+	{
+		TimeoutSeconds = static_cast<float>(Params->GetNumberField(TEXT("timeout_seconds")));
+		TimeoutSeconds = FMath::Clamp(TimeoutSeconds, 1.0f, 120.0f);
+	}
+
+	UE_LOG(LogUAPython, Log, TEXT("Executing Python (%d chars, timeout=%.0fs)"), Code.Len(), TimeoutSeconds);
+
+	// Extract optional transaction name for Undo History
+	FString TransactionName = TEXT("UnrealAgent Python");
+	if (Params->HasField(TEXT("transaction_name")))
+	{
+		FString CustomName;
+		if (Params->TryGetStringField(TEXT("transaction_name"), CustomName) && !CustomName.IsEmpty())
+		{
+			// Prefix with "AI: " for clarity in Undo History
+			TransactionName = FString::Printf(TEXT("AI: %s"), *CustomName);
+		}
+	}
 
 	IPythonScriptPlugin* PythonPlugin = IPythonScriptPlugin::Get();
 
+	// Wrap user code with timeout watchdog and undo transaction
+	const FString WrappedCode = WrapCodeWithSafeguards(Code, TimeoutSeconds, TransactionName);
+
 	// Build the execution command
-	// Use ExecuteFile mode with Public scope for stateful execution
 	FPythonCommandEx PythonCommand;
-	PythonCommand.Command = Code;
+	PythonCommand.Command = WrappedCode;
 	PythonCommand.ExecutionMode = EPythonCommandExecutionMode::ExecuteFile;
 	PythonCommand.FileExecutionScope = EPythonFileExecutionScope::Public;
 	PythonCommand.Flags = EPythonCommandFlags::Unattended;
@@ -161,6 +250,9 @@ bool UAPythonCommands::ExecutePython(
 		}
 	}
 
+	// Check if timeout occurred (from the watchdog's print message)
+	const bool bTimedOut = Output.Contains(TEXT("[UnrealAgent] ERROR: Execution timed out"));
+
 	// Truncate if too long
 	if (Output.Len() > MaxOutputLength)
 	{
@@ -175,8 +267,18 @@ bool UAPythonCommands::ExecutePython(
 
 	// Build result
 	OutResult = MakeShared<FJsonObject>();
-	OutResult->SetBoolField(TEXT("success"), bSuccess);
+	OutResult->SetBoolField(TEXT("success"), bSuccess && !bTimedOut);
 	OutResult->SetStringField(TEXT("output"), Output);
+
+	// Undo metadata — helps AI inform user about revertibility
+	OutResult->SetBoolField(TEXT("undo_available"), bSuccess && !bTimedOut);
+	OutResult->SetStringField(TEXT("transaction_name"), TransactionName);
+
+	if (bTimedOut)
+	{
+		OutResult->SetStringField(TEXT("error"),
+			FString::Printf(TEXT("Execution timed out after %.0f seconds. Possible infinite loop."), TimeoutSeconds));
+	}
 
 	if (!PythonCommand.CommandResult.IsEmpty())
 	{
@@ -185,18 +287,29 @@ bool UAPythonCommands::ExecutePython(
 
 	if (!Errors.IsEmpty())
 	{
-		OutResult->SetStringField(TEXT("error"), Errors);
+		if (OutResult->HasField(TEXT("error")))
+		{
+			// Append to existing error
+			FString ExistingError = OutResult->GetStringField(TEXT("error"));
+			OutResult->SetStringField(TEXT("error"), ExistingError + TEXT("\n") + Errors);
+		}
+		else
+		{
+			OutResult->SetStringField(TEXT("error"), Errors);
+		}
 	}
 
-	if (bSuccess)
+	if (bTimedOut)
 	{
-		UE_LOG(LogUAPython, Log, TEXT("Python execution succeeded. Output: %d chars"),
-			Output.Len());
+		UE_LOG(LogUAPython, Warning, TEXT("Python execution timed out after %.0fs"), TimeoutSeconds);
+	}
+	else if (bSuccess)
+	{
+		UE_LOG(LogUAPython, Log, TEXT("Python execution succeeded. Output: %d chars"), Output.Len());
 	}
 	else
 	{
-		UE_LOG(LogUAPython, Warning, TEXT("Python execution failed: %s"),
-			*PythonCommand.CommandResult);
+		UE_LOG(LogUAPython, Warning, TEXT("Python execution failed: %s"), *PythonCommand.CommandResult);
 	}
 
 	return true; // We always return true to send the result; success/failure is in the JSON
