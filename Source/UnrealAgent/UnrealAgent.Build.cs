@@ -25,6 +25,16 @@ public class UnrealAgent : ModuleRules
 			"ToolMenus",         // UToolMenus
 			"DeveloperSettings", // UDeveloperSettings
 			"MaterialEditor",    // UMaterialEditingLibrary
+ 			"ContentBrowser",    // FContentBrowserModule (UAContextCommands)
+			"Blutility",         // UEditorUtilityLibrary (UAContextCommands)
+			"Kismet",            // FKismetEditorUtilities, FBlueprintEditorUtils (UABlueprintCommands)
+			"BlueprintGraph",    // K2Node, EdGraphSchema_K2 (UABlueprintCommands)
+			"KismetCompiler",    // 蓝图编译器 (UABlueprintCommands)
+			"AssetTools",        // IAssetTools (UAAssetManageCommands)
+			"EditorScriptingUtilities", // UEditorAssetLibrary (UAAssetManageCommands)
+			"ImageWrapper",      // IImageWrapper, PNG 编码 (UAScreenshotCommands)
+			"RenderCore",        // FlushRenderingCommands (UAScreenshotCommands)
+			"RHI",               // FReadSurfaceDataFlags (UAScreenshotCommands)
 		});
 
 		// PythonScriptPlugin: header-only include (runtime optional via IPythonScriptPlugin::Get())

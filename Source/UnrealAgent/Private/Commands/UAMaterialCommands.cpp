@@ -664,12 +664,41 @@ bool UAMaterialCommands::ExecuteSetInstanceParam(const TSharedPtr<FJsonObject>& 
 	bool bOk = false;
 	FName FPN(*ParamName);
 
+	// BUG-002/007 修复：先验证参数是否存在于父材质中
+	// UMaterialEditingLibrary 的 Set*ParameterValue 在参数不存在时直接返回 false 且无信息
+	UMaterialInterface* ParentMat = MIC->Parent;
+	if (!ParentMat)
+	{
+		OutError = FString::Printf(TEXT("MaterialInstance '%s' has no parent material"), *AssetPath);
+		return false;
+	}
+
+	// 检查参数是否在父材质中定义
 	if (ParamType == TEXT("scalar"))
 	{
+		TArray<FName> ScalarNames;
+		UMaterialEditingLibrary::GetScalarParameterNames(ParentMat, ScalarNames);
+		if (!ScalarNames.Contains(FPN))
+		{
+			// 构建可用参数列表
+			FString AvailableParams;
+			for (const FName& N : ScalarNames) { if (!AvailableParams.IsEmpty()) AvailableParams += TEXT(", "); AvailableParams += N.ToString(); }
+			OutError = FString::Printf(TEXT("Scalar parameter '%s' not found in parent material. Available scalar parameters: [%s]"), *ParamName, *AvailableParams);
+			return false;
+		}
 		bOk = UMaterialEditingLibrary::SetMaterialInstanceScalarParameterValue(MIC, FPN, FCString::Atof(*ValueStr));
 	}
 	else if (ParamType == TEXT("vector"))
 	{
+		TArray<FName> VectorNames;
+		UMaterialEditingLibrary::GetVectorParameterNames(ParentMat, VectorNames);
+		if (!VectorNames.Contains(FPN))
+		{
+			FString AvailableParams;
+			for (const FName& N : VectorNames) { if (!AvailableParams.IsEmpty()) AvailableParams += TEXT(", "); AvailableParams += N.ToString(); }
+			OutError = FString::Printf(TEXT("Vector parameter '%s' not found in parent material. Available vector parameters: [%s]"), *ParamName, *AvailableParams);
+			return false;
+		}
 		TSharedRef<TJsonReader<>> Rd = TJsonReaderFactory<>::Create(ValueStr);
 		TSharedPtr<FJsonObject> CJ;
 		if (FJsonSerializer::Deserialize(Rd, CJ) && CJ.IsValid())
@@ -678,26 +707,50 @@ bool UAMaterialCommands::ExecuteSetInstanceParam(const TSharedPtr<FJsonObject>& 
 				CJ->HasField(TEXT("a")) ? CJ->GetNumberField(TEXT("a")) : 1.0f);
 			bOk = UMaterialEditingLibrary::SetMaterialInstanceVectorParameterValue(MIC, FPN, C);
 		}
-		else { OutError = TEXT("Invalid vector JSON"); return false; }
+		else { OutError = TEXT("Invalid vector JSON. Expected: {\"r\":1.0,\"g\":0.5,\"b\":0.0}"); return false; }
 	}
 	else if (ParamType == TEXT("texture"))
 	{
+		TArray<FName> TextureNames;
+		UMaterialEditingLibrary::GetTextureParameterNames(ParentMat, TextureNames);
+		if (!TextureNames.Contains(FPN))
+		{
+			FString AvailableParams;
+			for (const FName& N : TextureNames) { if (!AvailableParams.IsEmpty()) AvailableParams += TEXT(", "); AvailableParams += N.ToString(); }
+			OutError = FString::Printf(TEXT("Texture parameter '%s' not found in parent material. Available texture parameters: [%s]"), *ParamName, *AvailableParams);
+			return false;
+		}
 		UTexture* Tex = Cast<UTexture>(StaticLoadObject(UTexture::StaticClass(), nullptr, *ValueStr));
 		if (!Tex) { OutError = FString::Printf(TEXT("Texture not found: %s"), *ValueStr); return false; }
 		bOk = UMaterialEditingLibrary::SetMaterialInstanceTextureParameterValue(MIC, FPN, Tex);
 	}
 	else if (ParamType == TEXT("static_switch"))
 	{
+		TArray<FName> SwitchNames;
+		UMaterialEditingLibrary::GetStaticSwitchParameterNames(ParentMat, SwitchNames);
+		if (!SwitchNames.Contains(FPN))
+		{
+			FString AvailableParams;
+			for (const FName& N : SwitchNames) { if (!AvailableParams.IsEmpty()) AvailableParams += TEXT(", "); AvailableParams += N.ToString(); }
+			OutError = FString::Printf(TEXT("Static switch parameter '%s' not found in parent material. Available static_switch parameters: [%s]"), *ParamName, *AvailableParams);
+			return false;
+		}
 		bOk = UMaterialEditingLibrary::SetMaterialInstanceStaticSwitchParameterValue(MIC, FPN, ValueStr.ToBool());
 	}
-	else { OutError = FString::Printf(TEXT("Unknown param_type: %s"), *ParamType); return false; }
+	else { OutError = FString::Printf(TEXT("Unknown param_type: '%s'. Valid types: scalar, vector, texture, static_switch"), *ParamType); return false; }
 
-	if (bOk) UMaterialEditingLibrary::UpdateMaterialInstance(MIC);
+	if (!bOk)
+	{
+		OutError = FString::Printf(TEXT("UE API failed to set %s parameter '%s' on '%s'. The parameter exists in the parent material but SetMaterialInstance*ParameterValue returned false. This may be an engine limitation."), *ParamType, *ParamName, *AssetPath);
+		return false;
+	}
+
+	UMaterialEditingLibrary::UpdateMaterialInstance(MIC);
 
 	OutResult = MakeShared<FJsonObject>();
-	OutResult->SetBoolField(TEXT("success"), bOk);
+	OutResult->SetBoolField(TEXT("success"), true);
 	OutResult->SetStringField(TEXT("message"), FString::Printf(TEXT("Set %s.%s = %s"), *ParamType, *ParamName, *ValueStr));
-	return bOk;
+	return true;
 }
 
 // ==================== set_material_property ====================

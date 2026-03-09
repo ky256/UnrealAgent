@@ -1,6 +1,7 @@
 """Viewport and camera tools."""
 
 from ..server import mcp, connection
+from .python import record_tool_call
 
 
 @mcp.tool()

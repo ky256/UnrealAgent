@@ -10,6 +10,12 @@
 #include "Commands/UAPythonCommands.h"
 #include "Commands/UAEditorCommands.h"
 #include "Commands/UAMaterialCommands.h"
+#include "Commands/UAContextCommands.h"
+#include "Commands/UAPropertyCommands.h"
+#include "Commands/UABlueprintCommands.h"
+#include "Commands/UAAssetManageCommands.h"
+#include "Commands/UAScreenshotCommands.h"
+#include "Commands/UAEventCommands.h"
 #include "UnrealAgent.h"
 
 UACommandRegistry::UACommandRegistry()
@@ -23,6 +29,12 @@ UACommandRegistry::UACommandRegistry()
 	RegisterCommand(MakeShared<UAPythonCommands>());
 	RegisterCommand(MakeShared<UAEditorCommands>());
 	RegisterCommand(MakeShared<UAMaterialCommands>());
+	RegisterCommand(MakeShared<UAContextCommands>());
+	RegisterCommand(MakeShared<UAPropertyCommands>());
+	RegisterCommand(MakeShared<UABlueprintCommands>());
+	RegisterCommand(MakeShared<UAAssetManageCommands>());
+	RegisterCommand(MakeShared<UAScreenshotCommands>());
+	RegisterCommand(MakeShared<UAEventCommands>());
 }
 
 void UACommandRegistry::RegisterCommand(TSharedPtr<UACommandBase> Command)

@@ -63,7 +63,10 @@ TSharedPtr<FJsonObject> UAPythonCommands::GetToolSchema(const FString& MethodNam
 				 "Has access to the full 'unreal' module API. "
 				 "Context is stateful — variables and imports persist across calls. "
 				 "Use print() to produce output. "
-				 "Operations are wrapped in an undo transaction (Ctrl+Z to revert)."),
+				 "Operations are wrapped in an undo transaction (Ctrl+Z to revert). "
+				 "WARNING: Avoid calling open_editor_for_assets() or GAssetEditorSubsystem->OpenEditorForAsset() "
+				 "as opening asset editors (especially Materials) triggers synchronous shader compilation "
+				 "that blocks the editor's main thread and may cause temporary unresponsiveness."),
 			InputSchema
 		);
 	}
@@ -205,6 +208,25 @@ bool UAPythonCommands::ExecutePython(
 
 	UE_LOG(LogUAPython, Log, TEXT("Executing Python (%d chars, timeout=%.0fs)"), Code.Len(), TimeoutSeconds);
 
+	// BUG-003/004 修复：检测可能阻塞 Game Thread 的 API 调用
+	// 这些操作可能触发同步 shader 编译或模态对话框，阻塞编辑器主线程
+	static const TArray<FString> BlockingPatterns = {
+		TEXT("open_editor_for_asset"),
+		TEXT("OpenEditorForAsset"),
+		TEXT("open_editor_for_assets"),
+		TEXT("OpenEditorForAssets"),
+	};
+	bool bHasBlockingCall = false;
+	for (const FString& Pattern : BlockingPatterns)
+	{
+		if (Code.Contains(Pattern))
+		{
+			bHasBlockingCall = true;
+			UE_LOG(LogUAPython, Warning, TEXT("Python code contains potentially blocking call: '%s'. This may cause editor unresponsiveness."), *Pattern);
+			break;
+		}
+	}
+
 	// Extract optional transaction name for Undo History
 	FString TransactionName = TEXT("UnrealAgent Python");
 	if (Params->HasField(TEXT("transaction_name")))
@@ -273,6 +295,14 @@ bool UAPythonCommands::ExecutePython(
 	// Undo metadata — helps AI inform user about revertibility
 	OutResult->SetBoolField(TEXT("undo_available"), bSuccess && !bTimedOut);
 	OutResult->SetStringField(TEXT("transaction_name"), TransactionName);
+
+	// BUG-003/004: 如果代码包含可能阻塞的调用，在返回结果中添加警告
+	if (bHasBlockingCall)
+	{
+		OutResult->SetStringField(TEXT("warning"),
+			TEXT("Code contains API calls (e.g. open_editor_for_assets) that may trigger synchronous shader compilation "
+				 "and temporarily block the editor. If the editor becomes unresponsive, wait for shader compilation to finish."));
+	}
 
 	if (bTimedOut)
 	{

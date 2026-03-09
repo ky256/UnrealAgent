@@ -3,6 +3,8 @@
 #include "UnrealAgent.h"
 #include "Server/UATcpServer.h"
 #include "Settings/UASettings.h"
+#include "UALogCapture.h"
+#include "UAEventCache.h"
 #include "LevelEditor.h"
 #include "ToolMenus.h"
 
@@ -13,6 +15,12 @@ DEFINE_LOG_CATEGORY(LogUnrealAgent);
 void FUnrealAgentModule::StartupModule()
 {
 	UE_LOG(LogUnrealAgent, Log, TEXT("UnrealAgent module starting up..."));
+
+	// 初始化日志截获系统
+	UALogCapture::Get().Initialize();
+
+	// 初始化事件缓存系统
+	UAEventCache::Get().Initialize();
 
 	// Register menu entry
 	UToolMenus::RegisterStartupCallback(
@@ -42,6 +50,12 @@ void FUnrealAgentModule::StartupModule()
 void FUnrealAgentModule::ShutdownModule()
 {
 	UE_LOG(LogUnrealAgent, Log, TEXT("UnrealAgent module shutting down..."));
+
+	// 关闭事件缓存系统
+	UAEventCache::Get().Shutdown();
+
+	// 关闭日志截获系统
+	UALogCapture::Get().Shutdown();
 
 	if (TcpServer.IsValid())
 	{

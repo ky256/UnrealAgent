@@ -1,4 +1,58 @@
 {
-  "entries": [],
+  "entries": [
+    {
+      "id": "b0bd041a",
+      "category": "lessons_learned",
+      "title": "SceneCapture2D dark/black screenshots due to auto-exposure not converging in single frame",
+      "content": "## Problem\nWhen using SceneCapture2D for single-frame screenshots, the captured image is extremely dark/black compared to the editor viewport.\n\n## Root Cause\nSceneCapture2D with auto-exposure (default) needs multiple frames for eye adaptation to converge. When capturing only a single frame, the auto-exposure starts from a default state and hasn't had time to adapt to the scene brightness, resulting in severely underexposed images.\n\n## Solution\nOverride the auto-exposure method to `AEM_Manual` on the SceneCaptureComponent2D's PostProcessSettings:\n\n```cpp\n// Force manual exposure to avoid single-frame adaptation issue\nCaptureComp->PostProcessSettings.bOverride_AutoExposureMethod = true;\nCaptureComp->PostProcessSettings.AutoExposureMethod = EAutoExposureMethod::AEM_Manual;\n\n// Set exposure bias from viewport's FixedEV100\nCaptureComp->PostProcessSettings.bOverride_AutoExposureBias = true;\nCaptureComp->PostProcessSettings.AutoExposureBias = ExposureBias;\n\n// Ensure post-process overrides take effect\nCaptureComp->PostProcessBlendWeight = 1.0f;\n```\n\n## Key Notes\n- `SCS_FinalColorLDR` is the correct CaptureSource for matching viewport output\n- The viewport's `ExposureSettings.FixedEV100` (default 1.0) provides a good baseline exposure value\n- If the viewport uses auto-exposure (bFixed=false), the FixedEV100 still works as a reasonable default\n- PostProcessVolume settings in the scene will still be picked up by SceneCapture",
+      "tags": [
+        "screenshot",
+        "scene-capture",
+        "exposure",
+        "post-process"
+      ],
+      "ue_version": "5.7",
+      "confidence": 0.9,
+      "source": "ai_generated",
+      "created_at": "2026-03-09T04:28:50.546969+00:00",
+      "updated_at": "2026-03-09T04:28:50.546969+00:00",
+      "access_count": 0
+    },
+    {
+      "id": "6be592a0",
+      "category": "lessons_learned",
+      "title": "Scene screenshot: use viewport ReadPixels instead of SceneCapture2D for accurate final rendering",
+      "content": "## Problem\nSceneCapture2D produces screenshots with incorrect colors/exposure compared to the editor viewport. Even with manual exposure overrides (AEM_Manual, fixed EV100), the result doesn't match the viewport's final rendering because SceneCapture2D fundamentally re-renders the scene with its own rendering pipeline state.\n\n## Root Cause (First Principles)\nSceneCapture2D creates a NEW render pass — it's not reading the existing viewport's frame buffer. It re-renders the scene from scratch, which means:\n- Auto-exposure can't converge in a single frame\n- PostProcess settings may differ\n- No amount of parameter tweaking can perfectly replicate the viewport's multi-frame converged state\n\n## Solution\nDon't re-render. Instead, directly read the viewport's already-rendered frame buffer:\n\n```cpp\n// 1. Switch to GameView to hide gizmo/grid/icons\nconst bool bWasInGameView = ViewClient.IsInGameView();\nif (!bWasInGameView) ViewClient.SetGameView(true);\n\n// 2. Force viewport to redraw one frame (update frame buffer without presenting)\nViewport->Invalidate();\nViewport->Draw(false); // false = don't present to screen\nFlushRenderingCommands();\n\n// 3. Read the final rendered pixels directly\nTArray<FColor> Bitmap;\nViewport->ReadPixels(Bitmap);\n\n// 4. Restore GameView state\nif (!bWasInGameView) { ViewClient.SetGameView(false); Viewport->Invalidate(); }\n\n// 5. Resize if needed\nif (ViewWidth != TargetWidth || ViewHeight != TargetHeight)\n    FImageUtils::ImageResize(ViewWidth, ViewHeight, Bitmap, TargetWidth, TargetHeight, ResizedBitmap, true);\n```\n\n## Key Insight\nThe viewport ALREADY has the correct final rendering. The only task is to READ it, not to RECREATE it.",
+      "tags": [
+        "screenshot",
+        "viewport",
+        "readpixels",
+        "scene-capture",
+        "game-view"
+      ],
+      "ue_version": "5.7",
+      "confidence": 0.95,
+      "source": "ai_generated",
+      "created_at": "2026-03-09T04:55:41.896762+00:00",
+      "updated_at": "2026-03-09T04:55:41.896762+00:00",
+      "access_count": 0
+    },
+    {
+      "id": "a7be4e77",
+      "category": "lessons_learned",
+      "title": "Smoke Test Entry",
+      "content": "This is a test entry created during Layer 1 smoke testing. It should be deleted after verification.",
+      "tags": [
+        "test",
+        "smoke"
+      ],
+      "ue_version": null,
+      "confidence": 0.5,
+      "source": "ai_generated",
+      "created_at": "2026-03-09T07:48:07.294109+00:00",
+      "updated_at": "2026-03-09T07:48:07.294109+00:00",
+      "access_count": 0
+    }
+  ],
   "category": "lessons_learned"
 }
