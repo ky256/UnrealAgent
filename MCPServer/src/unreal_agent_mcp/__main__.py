@@ -14,6 +14,7 @@ def main():
     from .tools import context, properties  # noqa: F401
     from .tools import blueprints, asset_manage  # noqa: F401
     from .tools import screenshots, events  # noqa: F401
+    from .tools import build  # noqa: F401
 
     mcp.run(transport="stdio")
 

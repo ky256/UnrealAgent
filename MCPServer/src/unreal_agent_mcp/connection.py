@@ -18,15 +18,16 @@ class UnrealConnection:
         self._lock = asyncio.Lock()
         self._request_id = 0
 
-    async def connect(self) -> bool:
+    async def connect(self, timeout: float = 5.0) -> bool:
         """Establish connection to the UE plugin TCP server."""
         try:
-            self.reader, self.writer = await asyncio.open_connection(
-                self.host, self.port
+            self.reader, self.writer = await asyncio.wait_for(
+                asyncio.open_connection(self.host, self.port),
+                timeout=timeout,
             )
             logger.info(f"Connected to UnrealAgent at {self.host}:{self.port}")
             return True
-        except (ConnectionRefusedError, OSError) as e:
+        except (ConnectionRefusedError, OSError, asyncio.TimeoutError) as e:
             logger.error(f"Failed to connect to {self.host}:{self.port}: {e}")
             return False
 
